@@ -1,11 +1,12 @@
 # VSTR — Video Stretch Utility for Chips & Technologies CT6555x
 
-`VSTR` is a small DOS command-line utility to enable or disable LCD panel scaling 
+VSTR is a small DOS command-line utility to enable or disable LCD panel scaling 
 (horizontal and vertical stretching) on laptops using the C&T CT6555x graphics chipsets 
 (CT65550, CT65554, CT65555).  
 
-It is designed as a functional replacement and extension of the older `VEXP` utility, 
-but adds support for newer presets such as 1024×768 panels.
+It is designed as a functional replacement and extension of the older
+[VEXP](https://archive.org/details/vexp13_1997) utility, but adds support for newer
+presets such as 1024×768 panels.
 
 ---
 
@@ -20,6 +21,7 @@ are usually not stretched by default.
 
 The CT6555x family includes built-in hardware scalers that can stretch these modes 
 to the full panel. The scaler is controlled through a set of **extended registers**.  
+
 By toggling these registers, `VSTR` allows you to enable or disable stretching at will.
 
 ---
@@ -55,7 +57,7 @@ control the LCD panel’s stretch logic:
   are eligible for vertical stretching.
 
 > **Safe-use note:** Registers FR49–FR4C control *text mode vertical replication*.  
-> These are not modified by `VSTR`. On Toshiba laptops the BIOS already programs 
+> These are not modified by VSTR. On Toshiba laptops the BIOS already programs 
 > sensible defaults for text scaling, and changing them can distort characters.  
 > VSTR intentionally avoids them.
 
@@ -77,7 +79,7 @@ VSTR [options]
 
 - **`/ON`**  
   Enable stretching using either the current panel preset or the last selected one.  
-  Does *not* save original register state unless `/SAVE` is specified.
+  Does *not* save original register state unless /SAVE is specified.
 
 - **`/OFF`**  
   Disable stretching and restore original register values if a save exists.
@@ -133,8 +135,8 @@ VSTR /DIFF
 ## Notes
 
 - Registers are only modified once; the utility exits immediately.  
-- If a game or program resets registers afterwards, simply rerun `VSTR`.  
-- On first run, use `/SAVE` to capture BIOS defaults for safety.  
+- If a game or program resets registers afterwards, simply rerun VSTR.  
+- On first run, use /SAVE to capture BIOS defaults for safety.  
 - Only tested on Toshiba laptops with CT65550/554/555 chipsets, but should apply 
   to similar systems.
 
