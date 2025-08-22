@@ -144,6 +144,6 @@ VSTR /DIFF
 
 ## Compatibility Note
 
-Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. F6555x, F6555xF).  
-These are equivalent to CT6555x. The "F" was a vendor/marketing notation added sometime after
-the iinitial introduction of these chips denoting flat panel support.
+Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. CT F6555x).
+These are equivalent to CT 6555x. The "F" was a vendor/marketing notation added sometime after
+the initial introduction of these chips denoting flat panel support.
