@@ -56,10 +56,10 @@ control the LCD panel’s stretch logic:
   Bitmask controlling which vertical source classes (200/350/400/480 lines) 
   are eligible for vertical stretching.
 
-> **Safe-use note:** Registers FR49–FR4C control *text mode vertical replication*.  
-> These are not modified by VSTR. On Toshiba laptops the BIOS already programs 
-> sensible defaults for text scaling, and changing them can distort characters.  
-> VSTR intentionally avoids them.
+Note: Registers FR49–FR4C control *text mode vertical replication*.
+These are not modified by VSTR. On Toshiba laptops the BIOS already programs sensible
+defaults for text scaling, and changing them can distort characters.
+VSTR intentionally avoids them.
 
 For detailed descriptions, refer to the official chipset documentation:  
 - [CT65550 Datasheet (PDF)](http://bitsavers.informatik.uni-stuttgart.de/components/chipsAndTech/CHIPS_65550_199710.pdf)
