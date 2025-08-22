@@ -48,9 +48,9 @@ control the LCD panel’s stretch logic:
   - Bit 1: Enable vertical centering  
   - Bit 0: Enable vertical compensation (EVCP)  
 
-- **FR4D – Vertical Replication Start**  
-  Defines where in the frame vertical scaling begins. Lower values allow 
-  smaller modes (like 400-line) to be stretched further.
+- **FR4D – Vertical Replication Register**  
+  Stretch distribution control register - it gives the scaler a range of line spacing
+  to use while it spreads replicated lines across the frame.
 
 - **FR4E – Vertical Stretch Enable Mask**  
   Bitmask controlling which vertical source classes (200/350/400/480 lines) 
