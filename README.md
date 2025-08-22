@@ -1,4 +1,4 @@
-# VSTR — Video Stretch Utility for Chips & Technologies CT6555x
+# VSTR - Video Stretch Utility for Chips & Technologies CT6555x
 
 VSTR is a small DOS command-line utility to enable or disable LCD panel scaling 
 (horizontal and vertical stretching) on laptops using the C&T CT6555x graphics chipsets 
