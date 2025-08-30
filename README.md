@@ -2,7 +2,7 @@
 
 VSTR is a small DOS command-line utility to enable or disable LCD panel scaling 
 (horizontal and vertical stretching) on laptops using the C&T CT6555x graphics chipsets 
-(CT65550, CT65554, CT65555).  
+(CT65550, CT65554, CT65555). Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. CT F6555x). These are equivalent to CT 6555x. The "F" was a vendor/marketing notation added sometime after the initial introduction of these chips denoting flat panel support.
 
 It is designed as a functional replacement and extension of the older
 [VEXP](https://archive.org/details/vexp13_1997) utility, but adds support for newer
@@ -68,6 +68,16 @@ For detailed descriptions, refer to the official chipset documentation:
 
 
 ---
+
+## Build Instructions
+
+Prerequisites: **Borland C++ 3.1** (or Turbo C++ 3.x), memory model: **Tiny**
+
+```bat
+bcc -mt -Os -f- -N- -G- vstr.cpp
+```
+
+or run the provided `MAKE.BAT` file.
 
 ## Usage
 
@@ -142,8 +152,107 @@ VSTR /DIFF
 
 ---
 
-## Compatibility Note
+# TESTVLR - CT6555x Vertical Line Replication Test Utility
 
-Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. CT F6555x).
-These are equivalent to CT 6555x. The "F" was a vendor/marketing notation added sometime after
-the initial introduction of these chips denoting flat panel support.
+This is a small DOS program to experiment with **vertical line replication** in graphics modes on laptops with the **Chips & Technologies 6555x** graphics controller. 
+
+The tool makes it possible to explore **FR4D** (Vertical Line Replication Register) on various hardware and related registers in real time. This input may be needed to fine-tune the VSTR utility to work on as wide range of compatible hardware as possible.
+
+---
+
+## Features
+
+- Supports the common DOS graphics modes that exercise different input heights:
+  - **320×200×256** (VGA mode 0x13 → 200 lines, double-scanned to 400)
+  - **640×350×16** (EGA mode 0x10 → 350 lines)
+  - **640×400×256** (VESA mode 0x100 → 400 lines)
+  - **640×480×256** (VESA mode 0x101 → 480 lines)
+  - **800×600×256** (VESA mode 0x103 → 600 lines)
+
+- Draws an **even/odd stripe pattern** with a **20-pixel tick mark** every 10 lines.  
+  This makes it easy to see when lines are **replicated** (tripled lines appear clearly).
+
+- Provides **interactive hotkeys** to tweak `FR4D` (low/high nibbles) and related registers live, without rebooting or recompiling.
+
+---
+
+## Build Instructions
+
+Prerequisites: **Borland C++ 3.1** (or Turbo C++ 3.x), memory model: **Large**  
+
+```bat
+bcc -ml testvlr.c 
+```
+
+or run the provided `MAKE.BAT` file.
+
+## Usage
+
+1. Run `TESTVLR.EXE` in DOS.  
+2. Select the desired video mode:
+ - `[1]` 320×200×256 (200 lines)
+ - `[2]` 640×350×16 (350 lines)
+ - `[3]` 640×400×256 (400 lines)
+ - `[4]` 640×480×256 (480 lines)
+ - `[5]` 800×600×256 (600 lines)
+
+3. The program draws the stripe/tick pattern and enables flat-panel scaling logic.
+
+4. Use hotkeys to experiment with scaling:
+
+| Key  | Action                                                    |
+| ---- | --------------------------------------------------------- |
+| `+`  | Increase N (fixed replication interval, FR4D low=high)    |
+| `-`  | Decrease N                                                |
+| `l`  | Decrease **low nibble** of FR4D (min 0, not above high)   |
+| `L`  | Increase **low nibble**                                   |
+| `h`  | Decrease **high nibble** (not below low)                  |
+| `H`  | Increase **high nibble** (max F)                          |
+| `e`  | Toggle FR48 EVCP/LR bits (enable/disable scaling engine)  |
+| `w`  | Write arbitrary FRxx register (you will be prompted)      |
+| `d`  | Dump FR40..FR4F registers to screen                       |
+| `g`  | Restore all original FR01/FR4D/FR4E/FR48/FR41/FR40 values |
+| `q`  | Quit to text mode and restore registers                   |
+
+5. Observe how the picture stretches or leaves black bars depending on FR4D values.
+
+---
+
+## Background
+
+- **FR4D** controls the **Vertical Line Replication interval**:  
+- Low nibble = minimum interval  
+- High nibble = maximum interval  
+- The scaler starts with the low value, and if the result would **overflow** the panel, it increases up to the high nibble.  
+- **FR4E=0x3F** enables stretching for all vertical display end (VDE) classes.  
+- **FR48=0x17** enables vertical compensation and line replication.  
+- **FR41=0x07, FR40=0x3F** are needed for proper latch/compensation.  
+- The program sets **FR01[1]=1** to route through the flat-panel engine.  
+
+---
+
+## For 800×600 Panel Users
+
+On an 800×600 panel, all classic modes (200/350/400/480/600) can be stretched to (almost) fill the screen. The tool confirms the correct `FR4D` values and helps visualize how line triples are inserted.
+
+---
+
+## For 1024×768 Panel Users
+
+On a 1024×768 panel, stretching behavior is different. Some modes (e.g. 480-line input) can nearly fill the screen, while others will leave blank space.  
+
+**Please help test!**
+- Try each mode (200, 350, 400, 480, 600).
+- Start with `FR4D=0..5` (low=0, high=5).
+- Use `+/-` and `l/L/h/H` to adjust until the picture nearly fills vertically.
+- Report back which values give the best fit and how many blank lines remain.
+
+---
+
+## Safety / Notes
+
+- The tool **does not write to disk**. It only pokes VGA/CT65550 registers.  
+- Always exit with `q` so original registers are restored.  
+- On some BIOSes, unsupported modes (like 0x100/0x103) may not work — that’s normal.  
+
+
