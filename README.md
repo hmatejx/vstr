@@ -1,35 +1,37 @@
 # VSTR - Video Stretch Utility for Chips & Technologies CT6555x
 
-VSTR is a small DOS command-line utility to enable or disable LCD panel scaling 
-(horizontal and vertical stretching) on laptops using the C&T CT6555x graphics chipsets 
-(CT65550, CT65554, CT65555). Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. CT F6555x). These are equivalent to CT 6555x. The "F" was a vendor/marketing notation added sometime after the initial introduction of these chips denoting flat panel support.
+VSTR is a small DOS command-line utility to enable or disable LCD panel scaling  (horizontal and vertical stretching) on laptops using the C&T CT6555x graphics chipsets (CT65550, CT65554, CT65555). 
 
-It is designed as a functional replacement and extension of the older
-[VEXP](https://archive.org/details/vexp13_1997) utility, but adds support for newer
-presets such as 1024×768 panels.
+It is designed as a functional replacement and extension of the older [VEXP](https://archive.org/details/vexp13_1997) utility, but adds support for additional preset for 1024×768 panels.
+
+Note: Some OEM documentation and chip markings use the **F** prefix or suffix (e.g. CT F6555x). These are equivalent to CT 6555x. The "F" was a vendor/marketing notation added sometime after the initial introduction of these chips denoting flat panel support.
 
 ---
 
 ## Background
 
-Many Toshiba and similar laptops of the mid-1990s used flat-panel LCDs with native 
-resolutions such as 800×600 or 1024×768. In standard DOS modes (320×200, 640×480, etc.), 
-the BIOS usually doubles pixels but **does not stretch the image** to fill the panel, 
-leaving a centered picture with black borders. While BIOS typically contains settings that
-enable text mode stretching, the graphics modes, such as those those used by games,
-are usually not stretched by default.
+Many Toshiba and similar laptops of the mid-1990s used flat-panel LCDs with native  resolutions such as 800×600 or 1024×768. In standard DOS modes (320×200, 640×480, etc.),  the BIOS usually doubles pixels but **does not stretch the image** to fill the panel, 
+leaving a centered picture with black borders. While BIOS typically contains settings that enable text mode stretching, the graphics modes, such as those those used by games, are usually not stretched by default.
 
-The CT6555x family includes built-in hardware scalers that can stretch these modes 
-to the full panel. The scaler is controlled through a set of **extended registers**.  
+The CT6555x family includes built-in hardware scalers that can stretch these modes to the full panel. The scaler is controlled through a set of **extended registers**. 
 
 By toggling these registers, `VSTR` allows you to enable or disable stretching at will.
+
+### Best possible expected result
+
+**1024x768**
+
+![1024x768_output](/img/1024x768_output.png)
+
+**800x600**
+
+![800x600_output](/img/800x600_output.png)
 
 ---
 
 ## Registers Used
 
-The CT6555x chip exposes a set of **extended registers** (via ports 0x3D6/0x3D7) that 
-control the LCD panel’s stretch logic:
+The CT6555x chip exposes a set of **extended registers** (via ports 0x3D6/0x3D7) that control the LCD panel’s stretch logic:
 
 - **FR40 – Horizontal Compensation Control**  
   Enables horizontal stretching in graphics modes and defines how 8-dot and 
@@ -56,10 +58,7 @@ control the LCD panel’s stretch logic:
   Bitmask controlling which vertical source classes (200/350/400/480 lines) 
   are eligible for vertical stretching.
 
-Note: Registers FR49–FR4C control *text mode vertical replication*.
-These are not modified by VSTR. On Toshiba laptops the BIOS already programs sensible
-defaults for text scaling, and changing them can distort characters.
-VSTR intentionally avoids them.
+Note: Registers FR49–FR4C control *text mode vertical replication*. These are not modified by VSTR. On Toshiba laptops the BIOS already programs sensible defaults for text scaling, and changing them can distort characters. VSTR intentionally avoids them.
 
 For detailed descriptions, refer to the official chipset documentation:  
 - [CT65550 Datasheet (PDF)](http://bitsavers.informatik.uni-stuttgart.de/components/chipsAndTech/CHIPS_65550_199710.pdf)
@@ -88,9 +87,8 @@ VSTR [options]
 ### Options
 
 - **`/ON`**  
-  Enable stretching using either the current panel preset or the last selected one.  
-  Does *not* save original register state unless /SAVE is specified.
-
+  Enable stretching using either the current panel preset or the last selected one. Does *not* save original register state unless /SAVE is specified.
+  
 - **`/OFF`**  
   Disable stretching and restore original register values if a save exists.
 
@@ -252,7 +250,6 @@ On a 1024×768 panel, stretching behavior is different. Some modes (e.g. 480-lin
 ## Safety / Notes
 
 - The tool **does not write to disk**. It only pokes VGA/CT65550 registers.  
-- Always exit with `q` so original registers are restored.  
+- Always exit with `q` so original register values are restored.  
 - On some BIOSes, unsupported modes (like 0x100/0x103) may not work — that’s normal.  
-
 
