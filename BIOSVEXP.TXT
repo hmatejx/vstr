@@ -1,0 +1,11 @@
+=== VSTR /DIFF vs VSTR.SAV ===
+FR40 HCOMP  : cur=3F  snap=1F  **
+FR41 VCOMP  : cur=07  snap=03  **
+FR48 VCTRL  : cur=17  snap=13  **
+FR4D VREPL  : cur=40  snap=50  **
+FR4E VSEL   : cur=3F  snap=3F  ==
+FR49 T0     : cur=80  snap=80  ==
+FR4A T1     : cur=03  snap=03  ==
+FR4B T2     : cur=80  snap=80  ==
+FR4C T3     : cur=01  snap=01  ==
+( '**' marks differences )
