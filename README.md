@@ -231,7 +231,7 @@ or run the provided `MAKE.BAT` file.
 
 ## For 800×600 Panel Users
 
-On an 800×600 panel, all classic modes (200/350/400/480/600) can be stretched to (almost) fill the screen. The tool confirms the correct `FR4D` values and helps visualize how line triples are inserted.
+On an 800×600 panel, all classic modes (200/350/400/480/600) can be stretched to (almost) fill the screen. The tool confirms the correct `FR4D` values and helps visualize how repeated lines are inserted.
 
 ---
 
