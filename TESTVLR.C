@@ -91,7 +91,7 @@ static int vbe_get_mode_info(unsigned short mode, VbeModeInfoBlock far* p){
 static int vbe_set_bank_A(unsigned short bank){ union REGS r; r.x.ax=0x4F05; r.h.bh=0; r.h.bl=0; r.x.dx=bank; int86(0x10,&r,&r); return (r.x.ax==0x004F); }
 
 /* ---------- banked VRAM writer (VESA) ---------- */
-static void vram_write_block_vesa(const VbeModeInfoBlock* mi, unsigned long addr, const void far* src, unsigned long len){
+static void vram_write_block_vesa(const VbeModeInfoBlock far* mi, unsigned long addr, const void far* src, unsigned long len){
     unsigned long gran_bytes=(unsigned long)mi->WinGranularity*1024UL;
     unsigned long win_size  =(unsigned long)mi->WinSize      *1024UL;
     unsigned short seg=mi->WinASegment;
@@ -104,17 +104,17 @@ static void vram_write_block_vesa(const VbeModeInfoBlock* mi, unsigned long addr
         addr+=chunk; ps+=chunk; len-=chunk;
     }
 }
-static void fill_line_vesa(const VbeModeInfoBlock* mi, unsigned short y, unsigned short width, unsigned char color){
+static void fill_line_vesa(const VbeModeInfoBlock far* mi, unsigned short y, unsigned short width, unsigned char color){
     static unsigned char buf[1024]; /* big enough for width<=1024 */
     unsigned long addr=(unsigned long)y*(unsigned long)mi->BytesPerScanLine;
     _fmemset(buf, color, width); vram_write_block_vesa(mi, addr, buf, width);
 }
-static void tick_line_vesa(const VbeModeInfoBlock* mi, unsigned short y, unsigned short width){
+static void tick_line_vesa(const VbeModeInfoBlock far* mi, unsigned short y, unsigned short width){
     unsigned char buf[20]; unsigned short i, tw=(width>=20)?20:width;
     for(i=0;i<tw;++i) buf[i]=15;
     vram_write_block_vesa(mi, (unsigned long)y*(unsigned long)mi->BytesPerScanLine, buf, tw);
 }
-static void draw_pattern_vesa(const VbeModeInfoBlock* mi){
+static void draw_pattern_vesa(const VbeModeInfoBlock far* mi){
     unsigned short width=mi->XResolution, height=mi->YResolution, y;
     for(y=0;y<height;++y){ unsigned char c=(y&1)?2:1; fill_line_vesa(mi,y,width,c); if((y%10)==0) tick_line_vesa(mi,y,width); }
 }
@@ -194,7 +194,7 @@ static void dump_fr_block(void){
 }
 
 /* apply current low/high with proven sequence */
-static unsigned char cur_lo = 0, cur_hi = 5;        /* start 0..5 */
+static unsigned char cur_lo = 0, cur_hi = 0;        /* start with FR4D=0x00 */
 static unsigned char cur_fr48 = 0x17;               /* EVCP|EVLR set */
 static void apply_vrep_range(unsigned char lo, unsigned char hi){
     if(lo>hi) lo=hi;
@@ -209,7 +209,7 @@ static void apply_vrep_fixed(unsigned char n){ apply_vrep_range(n,n); }
 static void show_regs_line(const char* hdr){
     char buf[96];
     bios_puts(hdr);
-    sprintf(buf," FR4D=%02X FR4E=%02X FR48=%02X FR41=%02X FR40=%02X",
+    sprintf(buf,"FR4D=%02X FR4E=%02X FR48=%02X FR41=%02X FR40=%02X",
             rr(0x4D), rr(0x4E), rr(0x48), rr(0x41), rr(0x40));
     bios_puts(buf); bios_crlf();
 }
@@ -226,40 +226,49 @@ static int  set_mode_ega10h(void){ union REGS r; r.h.ah=0x00; r.h.al=0x10; int86
 /* ---------- main ---------- */
 int main(void)
 {
+    char modestr[12];
     cprintf("\r\nCT65550 V-Replication Live Tester\r\n"
-            "[1] 320x200x256 (VGA  0x13)\r\n"
-            "[2] 640x350x16  (EGA  0x10)\r\n"
-            "[3] 640x400x256 (VESA 0x100)\r\n"
-            "[4] 640x480x256 (VESA 0x101)\r\n"
-            "[5] 800x600x256 (VESA 0x103)\r\n"
-            "Select mode: ");
+	    "[1] 320x200x256 (VGA  0x13)\r\n"
+	    "[2] 640x350x16  (EGA  0x10)\r\n"
+	    "[3] 640x400x256 (VESA 0x100)\r\n"
+	    "[4] 640x480x256 (VESA 0x101)\r\n"
+	    "[5] 800x600x256 (VESA 0x103)\r\n"
+	    "Select mode: ");
     {
-        int sel=getch(); cprintf("%c\r\n", sel);
+	int sel=getch(); cprintf("%c\r\n", sel);
 
-        if(sel=='1'){
-            if(!set_mode_13h()){ cprintf("Mode 0x13 failed.\r\n"); return 1; }
-            init_basic_palette(); draw_pattern_13h();
-        } else if(sel=='2'){
-            if(!set_mode_ega10h()){ cprintf("Mode 0x10 failed.\r\n"); return 1; }
-            draw_pattern_ega10h();
-        } else if(sel=='3'){
-            VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
-            if(!vbe_get_mode_info(0x100, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
-            if(!vbe_set_mode(0x100)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
-            init_basic_palette(); draw_pattern_vesa(mi);
-        } else if(sel=='4'){
-            VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
-            if(!vbe_get_mode_info(0x101, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
-            if(!vbe_set_mode(0x101)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
-            init_basic_palette(); draw_pattern_vesa(mi);
-        } else if(sel=='5'){
-            VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
-            if(!vbe_get_mode_info(0x103, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
-            if(!vbe_set_mode(0x103)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
-            init_basic_palette(); draw_pattern_vesa(mi);
-        } else {
-            cprintf("Invalid selection.\r\n"); return 1;
-        }
+	if(sel=='1'){
+	    sprintf(modestr, "320x200");
+	    if(!set_mode_13h()){ cprintf("Mode 0x13 failed.\r\n"); return 1; }
+	    init_basic_palette(); draw_pattern_13h();
+	} else if(sel=='2'){
+	    sprintf(modestr, "640x350");
+	    if(!set_mode_ega10h()){ cprintf("Mode 0x10 failed.\r\n"); return 1; }
+	    draw_pattern_ega10h();
+	} else if(sel=='3'){
+	    sprintf(modestr, "640x400");
+	    {
+	    VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
+	    if(!vbe_get_mode_info(0x100, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
+	    if(!vbe_set_mode(0x100)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
+	    init_basic_palette(); draw_pattern_vesa(mi); }
+	} else if(sel=='4'){
+	    sprintf(modestr, "640x480");
+	    {
+	    VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
+	    if(!vbe_get_mode_info(0x101, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
+	    if(!vbe_set_mode(0x101)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
+	    init_basic_palette(); draw_pattern_vesa(mi); }
+	} else if(sel=='5'){
+	    sprintf(modestr, "800x600");
+	    {
+	    VbeModeInfoBlock far* mi=(VbeModeInfoBlock far*)MK_FP(0x9000,0x0000);
+	    if(!vbe_get_mode_info(0x103, mi)){ cprintf("VBE 0x4F01 failed.\r\n"); return 1; }
+	    if(!vbe_set_mode(0x103)){ cprintf("VBE 0x4F02 failed.\r\n"); return 1; }
+	    init_basic_palette(); draw_pattern_vesa(mi); }
+	} else {
+	    cprintf("Invalid selection.\r\n"); return 1;
+	}
     }
 
     /* Save originals & enable FP path */
@@ -271,52 +280,30 @@ int main(void)
     fr40_orig = rr(0x40);
     wr(0x01, (unsigned char)(fr01_orig | 0x02)); /* FP path on */
 
-    /* Initialize cur_lo/cur_hi from current FR4D so keys reflect reality */
-    {
-        unsigned char fr4d = rr(0x4D);
-        cur_lo = (unsigned char)(fr4d & 0x0F);
-        cur_hi = (unsigned char)((fr4d >> 4) & 0x0F);
-        if(cur_lo > cur_hi) cur_lo = cur_hi;
-    }
-
     /* Apply current (from FR4D) once to ensure proper latch values */
     apply_vrep_range(cur_lo, cur_hi);
 
     /* Help */
-    bios_puts("Keys: +/- fixed-N   l/L low--/++   h/H high--/++   e EVCP/LR   w write FR   d dump   g restore   q quit\r\n");
-    dump_fr_block();
+    bios_puts(modestr);
+    bios_puts(" KEYS: ^/v FR4D   Q QUIT   X EXIT\r\n");
 
     for(;;){
-        int k=getch();
-        if(k=='+'){
-            unsigned char n=(rr(0x4D)&0x0F); if(n<15) n++;
-            cur_lo = cur_hi = n; apply_vrep_fixed(n); show_regs_line("FIXED");
-        } else if(k=='-'){
-            unsigned char n=(rr(0x4D)&0x0F); if(n>0) n--;
-            cur_lo = cur_hi = n; apply_vrep_fixed(n); show_regs_line("FIXED");
-        } else if(k=='l'){
-            if(cur_lo>0){ cur_lo--; if(cur_lo>cur_hi) cur_lo=cur_hi; apply_vrep_range(cur_lo,cur_hi); show_regs_line("LOW--"); }
-        } else if(k=='L'){
-            if(cur_lo<cur_hi){ cur_lo++; apply_vrep_range(cur_lo,cur_hi); show_regs_line("LOW++"); }
-        } else if(k=='h'){
-            if(cur_hi>cur_lo){ cur_hi--; apply_vrep_range(cur_lo,cur_hi); show_regs_line("HIGH--"); }
-        } else if(k=='H'){
-            if(cur_hi<15){ cur_hi++; if(cur_lo>cur_hi) cur_lo=cur_hi; apply_vrep_range(cur_lo,cur_hi); show_regs_line("HIGH++"); }
-        } else if(k=='e'||k=='E'){
-            unsigned char v=rr(0x48); v ^= 0x05; cur_fr48=v; /* toggle EVCP/LR */
-            apply_vrep_range(cur_lo, cur_hi); show_regs_line("FR48 toggled");
-        } else if(k=='w'||k=='W'){
-            unsigned char idx=prompt_hex_byte("FR index");
-            unsigned char val=prompt_hex_byte("value");
-            wr(idx,val); bios_puts("wrote. "); dump_fr_block();
-            /* if FR4D changed externally, sync cur_lo/cur_hi */
-            if(idx==0x4D){ cur_lo=(unsigned char)(val&0x0F); cur_hi=(unsigned char)((val>>4)&0x0F); if(cur_lo>cur_hi) cur_lo=cur_hi; }
-        } else if(k=='d'||k=='D'){
-            dump_fr_block();
-        } else if(k=='g'||k=='G'){
-            restore_regs(); bios_puts("restored originals.\r\n");
-        } else if(k=='q'||k=='Q'){
-            restore_regs(); set_text_mode(); cprintf("Done.\r\n"); return 0;
-        }
+	int k=getch();
+	int spec=0;
+	if(k==0 || k==0xE0) { k = getch(); spec=1; } //handle special keys
+	if(k=='+' || (spec && k==72)) {
+	    unsigned char n=(rr(0x4D)&0x0F); if(n<15) n++;
+	    cur_lo = cur_hi = n; apply_vrep_fixed(n); show_regs_line("");
+	} else if(k=='-' || (spec && k==80)) {
+	    unsigned char n=(rr(0x4D)&0x0F); if(n>0) n--;
+	    cur_lo = cur_hi = n; apply_vrep_fixed(n); show_regs_line("");
+	} else if(k=='e'||k=='E'){
+	    unsigned char v=rr(0x48); v ^= 0x05; cur_fr48=v; /* toggle EVCP/LR */
+	    apply_vrep_range(cur_lo, cur_hi); show_regs_line("FR48 toggled ");
+	} else if(k=='q'||k=='Q'){
+	    restore_regs(); set_text_mode(); cprintf("Done.\r\n"); return 0;
+	} else if(k=='x'||k=='X'){
+	    set_text_mode(); cprintf("Done.\r\n"); return 0;
+	}
     }
 }
