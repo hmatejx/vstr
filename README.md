@@ -198,19 +198,13 @@ or run the provided `MAKE.BAT` file.
 
 4. Use hotkeys to experiment with scaling:
 
-| Key  | Action                                                    |
-| ---- | --------------------------------------------------------- |
-| `+`  | Increase N (fixed replication interval, FR4D low=high)    |
-| `-`  | Decrease N                                                |
-| `l`  | Decrease **low nibble** of FR4D (min 0, not above high)   |
-| `L`  | Increase **low nibble**                                   |
-| `h`  | Decrease **high nibble** (not below low)                  |
-| `H`  | Increase **high nibble** (max F)                          |
-| `e`  | Toggle FR48 EVCP/LR bits (enable/disable scaling engine)  |
-| `w`  | Write arbitrary FRxx register (you will be prompted)      |
-| `d`  | Dump FR40..FR4F registers to screen                       |
-| `g`  | Restore all original FR01/FR4D/FR4E/FR48/FR41/FR40 values |
-| `q`  | Quit to text mode and restore registers                   |
+| Key            | Action                                                       |
+| -------------- | ------------------------------------------------------------ |
+| `+`/up arrow   | Increase N (fixed replication interval, FR4D low=high)       |
+| `-`/down arrow | Decrease N (fixed replication interval, FR4D low=high)       |
+| `e`            | Toggle FR48 EVCP/LR bits (enable/disable scaling engine)     |
+| `q`            | Quit to text mode and restore registers                      |
+| `x`            | Quit to text mode and **do not** restore registers (useful for testing in games, for example) |
 
 5. Observe how the picture stretches or leaves black bars depending on FR4D values.
 
@@ -241,8 +235,8 @@ On a 1024×768 panel, stretching behavior is different. Some modes (e.g. 480-lin
 
 **Please help test!**
 - Try each mode (200, 350, 400, 480, 600).
-- Start with `FR4D=0..5` (low=0, high=5).
-- Use `+/-` and `l/L/h/H` to adjust until the picture nearly fills vertically.
+- Start with `FR4D=0x00` (low=0, high=0).
+- Use `+/-`  or up arrow/down arrow keys to adjust until the picture nearly fills vertically.
 - Report back which values give the best fit and how many blank lines remain.
 
 ---
@@ -250,6 +244,6 @@ On a 1024×768 panel, stretching behavior is different. Some modes (e.g. 480-lin
 ## Safety / Notes
 
 - The tool **does not write to disk**. It only pokes VGA/CT65550 registers.  
-- Always exit with `q` so original register values are restored.  
+- Exit with `q` so original register values are restored.  
 - On some BIOSes, unsupported modes (like 0x100/0x103) may not work — that’s normal.  
 
